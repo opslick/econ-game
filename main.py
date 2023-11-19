@@ -1,14 +1,15 @@
-# Import libraries
+#region Import libraries
 import sys
 import random
 import main_menu
-
+#endregion
 
 #region Initialisation
 
-GRID_X = 4
-GRID_Y = 3
-# tileSetup.txt
+#region Establish types
+GRID_X = 5
+GRID_Y = 8
+GRID_CHAR_SIZE  = 12
 naturalTypes = []
 builtTypes = []
 setupArraysPointer = 0
@@ -26,6 +27,7 @@ with open('tileSetup.txt', 'r') as tileSetup:
                 naturalTypes.append(line)
             elif setupArraysPointer == 1:
                 builtTypes.append(line) 
+#endregion
 
 class tileMap():
     
@@ -37,19 +39,39 @@ class tileMap():
                 self.map.append([x, y])
         self.mapTiles = []
         for i in self.map:
-            self.mapTiles.append([i, tileTemplate()])
+            self.mapTiles.append(tileTemplate())
+
+    def printMap(self):
+        xHeader = '  '
+        for x in range(GRID_X):
+            xHeader += str(x) + '          '
+        print(xHeader)
+        for y in range(GRID_Y):
+            xLine = str(y) + ' '
+            for x in range(GRID_X):
+                pointer = x + y * GRID_X
+                text = self.mapTiles[pointer].naturalType
+                try:
+                    text += ' ' + str(self.mapTiles[pointer].builtType)[0]
+                except:
+                    return
+                if len(text) > GRID_CHAR_SIZE:
+                    text = text[:GRID_CHAR_SIZE]
+                else:
+                    text = text + ' ' * (GRID_CHAR_SIZE - len(text))
+                xLine += text + '|'
+            xLine = xLine[:-1]
+            print(xLine)
 
     def processInput(self, mapIndex, command):
-        tilePointer = self.mapTiles.index(mapIndex)
+        tilePointer = self.mapTiles[mapIndex]
         match command:
-            case 'Build': 
-                buildingName = input('What building would you like to place? ')
+            case 'build': 
+                buildingName = input('What building would you like to place? ').lower()
                 tilePointer.build(buildingName)
             case _: 
                 print('Not defined yet')
-                
-
-
+           
 class tileTemplate():
 
     def __init__(self):
@@ -62,38 +84,32 @@ class tileTemplate():
     
     def build(self, building):
         match building:
-            case 'Farm':
+            case 'farm':
                 if self.naturalType == 'Plain' or self.naturalType == 'Hill':
-                    return
+                    self.builtType = 'Farm'
                 else:
-                    return f'{building} cannot be placed on a {self.naturalType} tile.'
-            case 'Mine':
+                    print(f'A {building} cannot be placed on a {self.naturalType} tile.')
+            case 'mine':
                 if self.naturalType == 'Plain' or self.naturalType == 'Hill' or self.naturalType == 'Mountain':
-                    return
+                    self.builtType = 'Mine'
                 else:
-                    return f'{building} cannot be placed on a {self.naturalType} tile.'
-            case 'Coal Powered Turbine':
+                    print(f'A {building} cannot be placed on a {self.naturalType} tile.')
+            case 'coal powered turbine':
                 if self.naturalType == 'Plain' or self.naturalType == 'Hill':
-                    return
+                    self.builtType = 'Coal Powered Turbine'
                 else:
-                    return f'{building} cannot be placed on a {self.naturalType} tile.'
+                    print(f'A {building} cannot be placed on a {self.naturalType} tile.')
             case _:
                 print('Error - Building input is not valid')
 
-
 #endregion
 
-# Main
+#region Main
 def main():
     #main_menu.main()
     econGame = tileMap()
     while True:
-        for y in range(GRID_Y):
-            xLine = ''
-            for x in range(GRID_X):
-                xLine += str(econGame.map[x + y * GRID_X]) + '|'
-            xLine = xLine[:-1]
-            print(xLine)
+        econGame.printMap()
         try:
             x = int(input('x? '))
         except:
@@ -102,23 +118,15 @@ def main():
             y = int(input('y? '))
         except:
             print('y - bad input')
-        command = input('What would you like to do? ')
+        command = input('What would you like to do? ').lower()
 
         mapIndex = (econGame.map.index([x, y]))
         if command == 'quit':
             sys.exit()
         else:
             econGame.processInput(mapIndex, command)
+#endregion
 
 # Start
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-

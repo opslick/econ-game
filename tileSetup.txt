@@ -1,5 +1,5 @@
 # Natural types
-Plain
+Plain;
 Hill
 Mountain
 River
@@ -12,7 +12,8 @@ Coal Powered Turbine
 `
 
 # Attributes
-
+beautiful,10
+picturesque,20
 
 # Random Modifiers
 
