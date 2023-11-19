@@ -1,0 +1,19 @@
+# Natural types
+Plain
+Hill
+Mountain
+River
+Sea
+`
+# Built types
+Farm
+Mine
+Coal Powered Turbine
+`
+
+# Attributes
+
+
+# Random Modifiers
+
+
