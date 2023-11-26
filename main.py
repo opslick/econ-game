@@ -1,16 +1,16 @@
 #region Import libraries
 import sys
-import random
 import csv
+import random
+import math
 import config
-import main_menu
 #endregion
 
 #region Initialisation
 
 #region Establish types
-GRID_X = 15
-GRID_Y = 8
+GRID_X = 13
+GRID_Y = 13
 GRID_CHAR_SIZE  = 12
 naturalTypes = []
 builtTypes = []
@@ -18,12 +18,9 @@ setupArraysPointer = 0
 file = open('tileSetup.csv')
 csvreader = csv.reader(file)
 naturalTypes = next(csvreader)
-naturalTypes.pop(0)
 for row in csvreader:
     builtTypes.append(row)
 
-print(naturalTypes)
-print(builtTypes)
 # with open('tileSetup.txt', 'r') as tileSetup:
 #     for line in tileSetup:
 #         line = line.strip()
@@ -51,13 +48,41 @@ class tileMap():
         self.mapTiles = []
         for i in self.map:
             self.mapTiles.append(tileTemplate())
-        # River generation
-        RiverPointer = (randint(0, GRID_X), randint(0, GRID_Y))
+        self.generateRivers()
+    
+    def generateRivers(self):     
+        for i in range(config.RiverCount):
+            RiverPointer = [random.randint(config.RiverFromEdge, GRID_X - config.RiverFromEdge), random.randint(config.RiverFromEdge, GRID_Y - config.RiverFromEdge)]
+            NewRiverTileIndex = self.map.index(RiverPointer)
+            self.mapTiles[NewRiverTileIndex].naturalType = "river"
+            RiverDirectionA = math.radians(random.randint(0, 359))
+            RiverDirectionB = RiverDirectionA + math.radians(180)
+            self.generateRiverLine(RiverPointer, RiverDirectionA)
+            self.generateRiverLine(RiverPointer, RiverDirectionB)
+                
+    def generateRiverLine(self, startTile, angle):
+        hypotenuse = 0
+        exitLoops = False
+        while not exitLoops:
+            for i in range(config.RiverSegmentSize):
+                hypotenuse += config.RiverCheckInterval
+                XAxis = math.floor(startTile[0] + math.sin(angle) * hypotenuse)
+                YAxis = math.floor(startTile[1] + math.cos(angle) * hypotenuse)
+                if XAxis > GRID_X - 1 or XAxis < 0:
+                    exitLoops = True
+                    break
+                elif YAxis > GRID_Y - 1 or YAxis < 0:
+                    exitLoops = True
+                    break
+                tileIndex = self.map.index([XAxis, YAxis])
+                self.mapTiles[tileIndex].naturalType = "river"
+            angle += math.radians(random.randint(-config.RiverWobble, config.RiverWobble))
 
+                            
     def printMap(self):
         xHeader = '  '
         for x in range(GRID_X):
-            xHeader += str(x) + '            '
+            xHeader += str(x) + ' ' * GRID_X
         print(xHeader)
         for y in range(GRID_Y):
             xLine = str(y) + ' '
@@ -89,7 +114,7 @@ class tileTemplate():
 
     def __init__(self):
         super().__init__()
-        self.naturalType = naturalTypes[0]
+        self.naturalType = naturalTypes[1]
         self.builtType = None
 
     def __str__(self):
