@@ -1,32 +1,43 @@
 #region Import libraries
 import sys
 import random
+import csv
+import config
 import main_menu
 #endregion
 
 #region Initialisation
 
 #region Establish types
-GRID_X = 5
+GRID_X = 15
 GRID_Y = 8
 GRID_CHAR_SIZE  = 12
 naturalTypes = []
 builtTypes = []
 setupArraysPointer = 0
-with open('tileSetup.txt', 'r') as tileSetup:
-    for line in tileSetup:
-        line = line.strip()
-        if line == '':
-            break
-        elif line.startswith('#'):
-            continue
-        elif line.startswith('`'):
-            setupArraysPointer += 1
-        else: 
-            if setupArraysPointer == 0:
-                naturalTypes.append(line)
-            elif setupArraysPointer == 1:
-                builtTypes.append(line) 
+file = open('tileSetup.csv')
+csvreader = csv.reader(file)
+naturalTypes = next(csvreader)
+naturalTypes.pop(0)
+for row in csvreader:
+    builtTypes.append(row)
+
+print(naturalTypes)
+print(builtTypes)
+# with open('tileSetup.txt', 'r') as tileSetup:
+#     for line in tileSetup:
+#         line = line.strip()
+#         if line == '':
+#             break
+#         elif line.startswith('#'):
+#             continue
+#         elif line.startswith('`'):
+#             setupArraysPointer += 1
+#         else: 
+#             if setupArraysPointer == 0:
+#                 naturalTypes.append(line)
+#             elif setupArraysPointer == 1:
+                # builtTypes.append(line) 
 #endregion
 
 class tileMap():
@@ -40,11 +51,13 @@ class tileMap():
         self.mapTiles = []
         for i in self.map:
             self.mapTiles.append(tileTemplate())
+        # River generation
+        RiverPointer = (randint(0, GRID_X), randint(0, GRID_Y))
 
     def printMap(self):
         xHeader = '  '
         for x in range(GRID_X):
-            xHeader += str(x) + '          '
+            xHeader += str(x) + '            '
         print(xHeader)
         for y in range(GRID_Y):
             xLine = str(y) + ' '
@@ -76,7 +89,7 @@ class tileTemplate():
 
     def __init__(self):
         super().__init__()
-        self.naturalType = naturalTypes[random.randint(0, 4)]
+        self.naturalType = naturalTypes[0]
         self.builtType = None
 
     def __str__(self):
