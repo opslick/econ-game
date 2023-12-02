@@ -8,10 +8,9 @@ import config
 
 #region Initialisation
 
-#region Establish types
-GRID_X = 13
-GRID_Y = 13
-GRID_CHAR_SIZE  = 12
+GRID_X = 18
+GRID_Y = 18
+GRID_CHAR_SIZE  = 8
 naturalTypes = []
 builtTypes = []
 setupArraysPointer = 0
@@ -21,21 +20,15 @@ naturalTypes = next(csvreader)
 for row in csvreader:
     builtTypes.append(row)
 
-# with open('tileSetup.txt', 'r') as tileSetup:
-#     for line in tileSetup:
-#         line = line.strip()
-#         if line == '':
-#             break
-#         elif line.startswith('#'):
-#             continue
-#         elif line.startswith('`'):
-#             setupArraysPointer += 1
-#         else: 
-#             if setupArraysPointer == 0:
-#                 naturalTypes.append(line)
-#             elif setupArraysPointer == 1:
-                # builtTypes.append(line) 
-#endregion
+def checkTileValid(naturalType, builtType):  
+    builtTypesNames = [builtType[0] for builtType in builtTypes]
+    builtTypesIndex = builtTypesNames.index(builtType)
+    naturalTypeIndex = naturalTypes.index(naturalType)
+    temp = builtTypes[builtTypesIndex][naturalTypeIndex]
+    if int(builtTypes[builtTypesIndex][naturalTypeIndex]) == 1:
+        return True
+    else:
+        return False
 
 class tileMap():
     
@@ -49,6 +42,8 @@ class tileMap():
         for i in self.map:
             self.mapTiles.append(tileTemplate())
         self.generateRivers()
+        self.generateRoads()
+        
     
     def generateRivers(self):     
         for i in range(config.RiverCount):
@@ -57,10 +52,10 @@ class tileMap():
             self.mapTiles[NewRiverTileIndex].naturalType = "river"
             RiverDirectionA = math.radians(random.randint(0, 359))
             RiverDirectionB = RiverDirectionA + math.radians(180)
-            self.generateRiverLine(RiverPointer, RiverDirectionA)
-            self.generateRiverLine(RiverPointer, RiverDirectionB)
+            endedEarly = self.generateRiverLine(RiverPointer, RiverDirectionA, False)
+            self.generateRiverLine(RiverPointer, RiverDirectionB, endedEarly)
                 
-    def generateRiverLine(self, startTile, angle):
+    def generateRiverLine(self, startTile, angle, canEndEarly):
         hypotenuse = 0
         exitLoops = False
         while not exitLoops:
@@ -77,22 +72,134 @@ class tileMap():
                 tileIndex = self.map.index([XAxis, YAxis])
                 self.mapTiles[tileIndex].naturalType = "river"
             angle += math.radians(random.randint(-config.RiverWobble, config.RiverWobble))
+            if canEndEarly == True and random.random() < config.RiverEndingChange:
+                return True
+        return False
 
-                            
+    def generateRoads(self):
+        for i in range(config.RoadMapCount):
+            startingTile = random.choice(self.mapTiles)
+            startingTileCoords = self.map[self.mapTiles.index(startingTile)]
+            while not ((startingTileCoords[0] > config.RoadStartingBoundaries) and (startingTileCoords[0] < (GRID_X - config.RoadStartingBoundaries)) and (startingTileCoords[1] > config.RoadStartingBoundaries) and (startingTileCoords[1] < (GRID_Y - config.RoadStartingBoundaries))):   
+                startingTile = random.choice(self.mapTiles)
+                startingTileCoords = self.map[self.mapTiles.index(startingTile)]
+                while not checkTileValid(startingTile.naturalType, "road"):
+                    startingTile = random.choice(self.mapTiles)
+                    startingTileCoords = self.map[self.mapTiles.index(startingTile)]
+                    
+            startingTile.builtType = "road"
+            self.layRoadMap(startingTile)
+    
+    def layRoadMap(self, startingTile):
+        lastTileCoords = self.map[self.mapTiles.index(startingTile)]
+        segmentsLayed = 0
+        isFinishedRoad = False
+        exitingMapSpace = False
+        # Setting random early avoids direction selection bias for 1st pick in the while statement
+        isX = bool(random.getrandbits(1))
+        isPositiveDirection = bool(random.getrandbits(1))
+        while not isFinishedRoad:
+            if segmentsLayed >= config.MinRoadSegments and config.RoadSegmentEndChance < random.random():
+                isFinishedRoad = True
+                break
+            previousX = isX
+            previousPositiveDirection = isPositiveDirection
+            # ONLY ALLOW CHANGING DIRECTION WHILE THE LAST TILE ISN'T A BRIDGE, THAT'D LOOK REALLY SILLY AND STRANGE AND WEIRD AND POOPY AND SHARTY AND STINKY
+            ##################################################################################################################################################
+            # Only an X chance of segment direction change inclusive of same
+            if self.mapTiles[self.map.index(lastTileCoords)].builtType != "bridge":
+                if random.random() < config.RoadSegmentDirectionChangeChance:
+                    isX = bool(random.getrandbits(1))
+                    isPositiveDirection = bool(random.getrandbits(1))
+            while previousX == isX and previousPositiveDirection != isPositiveDirection:
+                isX = bool(random.getrandbits(1))
+                isPositiveDirection = bool(random.getrandbits(1))                
+            for i in range(config.RoadSegmentSize):
+                if isFinishedRoad == True:
+                    break
+                if isX:
+                    deltaX = 1 if isPositiveDirection else -1
+                    newCoords = [lastTileCoords[0] + deltaX, lastTileCoords[1]]
+                else:
+                    deltaY = 1 if isPositiveDirection else -1
+                    newCoords = [lastTileCoords[0], lastTileCoords[1] + deltaY]
+                try:
+                    newTile = self.mapTiles[self.map.index(newCoords)]
+                except ValueError:
+                    exitingMapSpace = True
+                else:
+                    if checkTileValid(newTile.naturalType, "road"):
+                        newTile.builtType = "road"
+                    elif checkTileValid(newTile.naturalType, "bridge"):
+                        newTile.builtType = "bridge"
+                if exitingMapSpace == True:
+                    #Change axis and travel random direction, if not go the other one, if not cancel layout and roadFinished = True
+                    oldPositiveDirection = isPositiveDirection
+                    isX = not isX
+                    isPositiveDirection = bool(random.getrandbits(1))
+                    hasFailedBefore = False
+                    for isReverseDirection in [1, -1]:
+                        try:
+                            if isX:
+                                deltaX = config.RoadSegmentSize if isPositiveDirection else -config.RoadSegmentSize
+                                newCoords = [lastTileCoords[0] + deltaX * isReverseDirection, lastTileCoords[1]]
+                            else:
+                                deltaY = config.RoadSegmentSize if isPositiveDirection else -config.RoadSegmentSize
+                                newCoords = [lastTileCoords[0], lastTileCoords[1] + deltaY * isReverseDirection]
+                            newTile = self.mapTiles[self.map.index(newCoords)]
+                        except ValueError:
+                            if hasFailedBefore == False:
+                                hasFailedBefore = True
+                            else:
+                                isFinishedRoad = True
+                                break
+                        else:
+                            #Flipping directions to opposite of original map ending
+                            isX = not isX
+                            oldPositiveDirection = isPositiveDirection
+                            for i2 in range(i):
+                                if isFinishedRoad == True:
+                                    break
+                                if isX:
+                                    deltaX = 1 if isPositiveDirection else -1
+                                    newCoords = [lastTileCoords[0] + deltaX, lastTileCoords[1]]
+                                else:
+                                    deltaY = 1 if isPositiveDirection else -1
+                                    newCoords = [lastTileCoords[0], lastTileCoords[1] + deltaY]
+                                try:
+                                    newTile = self.mapTiles[self.map.index(newCoords)]
+                                except ValueError:
+                                    # The map would have to be smaller than segment size to get here
+                                    isFinishedRoad = True
+                                    break
+                                else:
+                                    if checkTileValid(newTile.naturalType, "road"):
+                                        newTile.builtType = "road"
+                                    elif checkTileValid(newTile.naturalType, "bridge"):
+                                        newTile.builtType = "bridge"
+                                lastTileCoords = self.map[self.mapTiles.index(newTile)]
+                lastTileCoords = self.map[self.mapTiles.index(newTile)]
+            segmentsLayed += 1
+            
+                                        
     def printMap(self):
-        xHeader = '  '
+        xHeader = '    '
         for x in range(GRID_X):
-            xHeader += str(x) + ' ' * GRID_X
+            xHeader += str(x) + ' ' * (GRID_CHAR_SIZE - len(str(x)) + 1)
         print(xHeader)
         for y in range(GRID_Y):
-            xLine = str(y) + ' '
+            xLine = str(y) + '   '
+            if len(xLine) > 4:
+                xLine = xLine[:4]
             for x in range(GRID_X):
                 pointer = x + y * GRID_X
-                text = self.mapTiles[pointer].naturalType
-                try:
-                    text += ' ' + str(self.mapTiles[pointer].builtType)[0]
-                except:
-                    return
+                text = self.mapTiles[pointer].builtType
+                if text is None:
+                    text = self.mapTiles[pointer].naturalType
+                # try:
+                #     text += ' ' + str(self.mapTiles[pointer].builtType)[0]
+                # except ValueError:
+                #     return
                 if len(text) > GRID_CHAR_SIZE:
                     text = text[:GRID_CHAR_SIZE]
                 else:

@@ -1,4 +1,4 @@
-,ground,hill,river,pond
-apartment,1,1,0,0
-street,1,1,0,0
-highway,1,0,0,0
+,ground,hill,river,desert
+apartment,1,1,0,1
+road,1,1,0,1
+bridge,0,0,1,0
