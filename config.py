@@ -1,3 +1,7 @@
+# Window settings
+GameWindowX = 1000
+GameWindowY = 1000
+
 # Map generation variables
 RiverCount = 1
 RiverFromEdge = 2
@@ -10,7 +14,7 @@ RoadStartingBoundaries = 6
 RoadMapCount = 1
 RoadSegmentSize = 3
 RoadSegmentDirectionChangeChance = 0.7
-MinRoadSegments = 10
+MinRoadSegments = 50
 RoadSegmentEndChance = 0.1
 HillCount = 2
 MaxHillLayerSize = 2

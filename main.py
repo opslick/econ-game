@@ -4,6 +4,8 @@ import csv
 import random
 import math
 import config
+from tkinter import *
+from tkinter import ttk
 #endregion
 
 #region Initialisation
@@ -30,6 +32,19 @@ def checkTileValid(naturalType, builtType):
     else:
         return False
 
+class gameWindow():
+    
+    def __init__(self):
+        root = Tk()
+        root.resizable(0, 0)
+        root.geometry(str(config.GameWindowX) + "x" + str(config.GameWindowY))
+        gameFrame = ttk.Frame(root, padding = 10)
+        gameFrame.grid()
+        ttk.Label(gameFrame, text="Hello World!").grid(column=0, row=0)
+        ttk.Button(gameFrame, text="Quit", command=root.destroy).grid(column=1, row=0)
+        root.mainloop()
+        
+
 class tileMap():
     
     def __init__(self):
@@ -45,7 +60,7 @@ class tileMap():
         self.generateRoads()
         
     
-    def generateRivers(self):     
+    def generateRivers(self):
         for i in range(config.RiverCount):
             RiverPointer = [random.randint(config.RiverFromEdge, GRID_X - config.RiverFromEdge), random.randint(config.RiverFromEdge, GRID_Y - config.RiverFromEdge)]
             NewRiverTileIndex = self.map.index(RiverPointer)
@@ -104,9 +119,6 @@ class tileMap():
                 break
             previousX = isX
             previousPositiveDirection = isPositiveDirection
-            # ONLY ALLOW CHANGING DIRECTION WHILE THE LAST TILE ISN'T A BRIDGE, THAT'D LOOK REALLY SILLY AND STRANGE AND WEIRD AND POOPY AND SHARTY AND STINKY
-            ##################################################################################################################################################
-            # Only an X chance of segment direction change inclusive of same
             if self.mapTiles[self.map.index(lastTileCoords)].builtType != "bridge":
                 if random.random() < config.RoadSegmentDirectionChangeChance:
                     isX = bool(random.getrandbits(1))
@@ -147,6 +159,10 @@ class tileMap():
                                 deltaY = config.RoadSegmentSize if isPositiveDirection else -config.RoadSegmentSize
                                 newCoords = [lastTileCoords[0], lastTileCoords[1] + deltaY * isReverseDirection]
                             newTile = self.mapTiles[self.map.index(newCoords)]
+                            if checkTileValid(newTile.naturalType, "road"):
+                                newTile.builtType = "road"
+                            elif checkTileValid(newTile.naturalType, "bridge"):
+                                newTile.builtType = "bridge"    
                         except ValueError:
                             if hasFailedBefore == False:
                                 hasFailedBefore = True
@@ -156,7 +172,7 @@ class tileMap():
                         else:
                             #Flipping directions to opposite of original map ending
                             isX = not isX
-                            oldPositiveDirection = isPositiveDirection
+                            isPositiveDirection = not oldPositiveDirection
                             for i2 in range(i):
                                 if isFinishedRoad == True:
                                     break
@@ -178,6 +194,7 @@ class tileMap():
                                     elif checkTileValid(newTile.naturalType, "bridge"):
                                         newTile.builtType = "bridge"
                                 lastTileCoords = self.map[self.mapTiles.index(newTile)]
+                        exitingMapSpace = False
                 lastTileCoords = self.map[self.mapTiles.index(newTile)]
             segmentsLayed += 1
             
@@ -251,6 +268,7 @@ class tileTemplate():
 
 #region Main
 def main():
+    window = gameWindow()
     #main_menu.main()
     econGame = tileMap()
     while True:
