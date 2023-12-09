@@ -1,6 +1,11 @@
 # Window settings
-GameWindowX = 1000
-GameWindowY = 1000
+GameTitle = "econ-game"
+GameWindowX = 1600
+GameWindowY = 900
+GameFont = "MS Gothic"
+
+# Game Settings
+MaxTicksPerSecond = 60
 
 # Map generation variables
 RiverCount = 1

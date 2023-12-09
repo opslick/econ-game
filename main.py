@@ -4,8 +4,8 @@ import csv
 import random
 import math
 import config
-from tkinter import *
-from tkinter import ttk
+import tkinter as tk
+from tkinter import ttk, font
 #endregion
 
 #region Initialisation
@@ -32,17 +32,69 @@ def checkTileValid(naturalType, builtType):
     else:
         return False
 
-class gameWindow():
+class gameWindow(tk.Tk):
     
     def __init__(self):
-        root = Tk()
-        root.resizable(0, 0)
-        root.geometry(str(config.GameWindowX) + "x" + str(config.GameWindowY))
-        gameFrame = ttk.Frame(root, padding = 10)
-        gameFrame.grid()
-        ttk.Label(gameFrame, text="Hello World!").grid(column=0, row=0)
-        ttk.Button(gameFrame, text="Quit", command=root.destroy).grid(column=1, row=0)
-        root.mainloop()
+        tk.Tk.__init__(self)
+        self.title(config.GameTitle)
+        self.iconbitmap("assets/econ-game.ico")
+        self.resizable(0, 0)
+        self.geometry(str(config.GameWindowX) + "x" + str(config.GameWindowY))
+        self.fontBase = font.Font(name = config.GameFont, size = 18)
+        self.style = ttk.Style()
+        self.style.configure("TButton", font=self.fontBase)
+        self.mainMenu = self.constructMainMenu()
+        self.mainMenu.tkraise()
+        self.gameFrame = None
+        self.mainloop()
+    
+    def constructMainMenu(self):
+        mainMenu = tk.Frame(self)
+        mainMenu.grid()
+        ttk.Label(mainMenu, text = "econ-game", font = self.fontBase).grid(column = 0, row = 0)
+        ttk.Button(mainMenu, text = "Play", style = "TButton", command = self.startGame).grid(column = 0, row = 1)
+        ttk.Button(mainMenu, text = "Quit", style = "TButton", command = self.closeApp).grid(column = 0, row = 2)
+        return mainMenu
+    
+    def constructGame(self):
+        self.gameFrame = tk.Frame(self)
+        
+        self.globalBanner = self.constructGlobalBanner()
+        self.globalBanner.pack(fill=tk.X)
+
+        self.mapFrame = self.constructMapFrame()
+        self.mapFrame.pack(side=tk.LEFT, fill=tk.BOTH)
+
+        self.detailsFrame = self.constructDetailsFrame()
+        self.detailsFrame.pack(side=tk.RIGHT, fill=tk.BOTH)
+        
+        return self.gameFrame
+        
+        # Context menu for > settings, exit
+    
+    def constructGlobalBanner(self):
+        globalBanner = tk.Frame(self.gameFrame, width = config.GameWindowX, height = config.GameWindowY * 0.125, background="lightblue")
+        return globalBanner
+    
+    def constructMapFrame(self):
+        mapFrame = tk.Frame(self.gameFrame, width = config.GameWindowX * 0.75, height = config.GameWindowY * 0.875, background="lightgreen")
+        return mapFrame
+    
+    def constructDetailsFrame(self):
+        detailsFrame = tk.Frame(self.gameFrame, width = config.GameWindowX * 0.75, height = config.GameWindowY * 0.875, background="lightcoral")
+        return detailsFrame
+    
+    
+    def startGame(self):
+        if self.gameFrame is None:
+            self.gameFrame = self.constructGame()
+            self.gameFrame.grid(row=0, column=0, sticky="nsew")
+        else:
+            self.gameFrame.tkraise()
+        
+    def closeApp(self):
+        self.destroy()
+        
         
 
 class tileMap():
